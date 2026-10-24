@@ -1,0 +1,10 @@
+<resources>
+    <color name="brand_primary">#0F766E</color>
+    <color name="brand_secondary">#0369A1</color>
+    <color name="launcher_background">#FF5420</color>
+    <color name="surface">#F8FAFC</color>
+    <color name="surface_variant">#E2E8F0</color>
+    <color name="on_surface">#0F172A</color>
+    <color name="on_surface_variant">#475569</color>
+    <color name="white">#FFFFFF</color>
+</resources>

@@ -1,0 +1,95 @@
+# Android / Gradle
+.gradle/
+.gradle-home/
+.kotlin/
+build/
+app/build/
+captures/
+.cxx/
+.externalNativeBuild/
+.navigation/
+local.properties
+*.iml
+*.hprof
+lint-results*
+
+# IDE / 编辑器 / 操作系统
+.idea/
+.vscode/
+.fleet/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python
+.venv/
+.venv-test/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# 本地环境与敏感配置
+.env
+.env.*
+!**/.env.example
+!**/.env.sample
+*.env.local
+
+# 密钥、证书与签名文件
+debug.keystore
+*.keystore
+*.jks
+*.p12
+*.pem
+*.key
+/certs/
+/*_nginx/
+
+# 模型与推理缓存
+.paddlex-cache/
+.cache/
+/models/
+/server/models/
+/app/src/main/assets/asr/
+/app/src/main/assets/models/
+*.onnx
+*.gguf
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.bin
+
+# 运行数据、数据库与日志
+/data/
+/server/data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.log
+
+# Android 安装包与调试产物
+*.apk
+*.aab
+/.adbhome/
+/.android-home/
+
+# 根目录临时调试文件
+/*.xml
+/*.json
+/*.png
+/*.jpg
+/*.jpeg
+/*.aac
+
+# 本地测试数据
+/test_output/
+/test_picture/
+/test_vedioes/
+/test_videos/
+/tools/

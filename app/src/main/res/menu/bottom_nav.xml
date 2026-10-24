@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_capture"
+        android:icon="@drawable/ic_tab_capture"
+        android:title="@string/tab_capture" />
+    <item
+        android:id="@+id/nav_courses"
+        android:icon="@drawable/ic_tab_courses"
+        android:title="@string/tab_courses" />
+    <item
+        android:id="@+id/nav_settings"
+        android:icon="@drawable/ic_tab_settings"
+        android:title="@string/tab_settings" />
+</menu>
+

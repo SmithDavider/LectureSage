@@ -1,0 +1,27 @@
+[Unit]
+Description=Keji local Qwen transcript correction service
+After=network.target
+
+[Service]
+Type=simple
+User=keji
+WorkingDirectory=/opt/keji-qwen-correction
+Environment=LD_LIBRARY_PATH=/opt/keji-qwen-correction/llama.cpp/build/bin
+Environment=OMP_NUM_THREADS=6
+ExecStart=/opt/keji-qwen-correction/llama.cpp/build/bin/llama-server \
+    --model /opt/keji-qwen-correction/models/Qwen3-1.7B-Q8_0.gguf \
+    --alias qwen3-1.7b \
+    --host 127.0.0.1 \
+    --port 8081 \
+    --threads 6 \
+    --ctx-size 4096 \
+    --parallel 1 \
+    --reasoning off \
+    --jinja \
+    --no-webui
+Restart=on-failure
+RestartSec=5
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

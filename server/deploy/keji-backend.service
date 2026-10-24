@@ -1,0 +1,18 @@
+[Unit]
+Description=Keji classroom backend
+After=network.target
+
+[Service]
+Type=simple
+User=keji
+WorkingDirectory=/opt/keji/backend
+EnvironmentFile=/opt/keji/backend/.env
+Environment=PATH=/opt/keji/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/opt/keji/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=3
+CPUWeight=80
+
+[Install]
+WantedBy=multi-user.target
+

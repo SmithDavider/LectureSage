@@ -1,0 +1,13 @@
+<resources>
+    <style name="Theme.Keji" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#2DD4BF</item>
+        <item name="colorOnPrimary">#04211F</item>
+        <item name="colorSecondary">#38BDF8</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_variant</item>
+        <item name="android:windowBackground">@color/surface</item>
+        <item name="android:statusBarColor">@color/surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

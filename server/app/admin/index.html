@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>课迹后台管理</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", system-ui, sans-serif;
+      background: #f4f6fb;
+      color: #1f2937;
+    }
+    header {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+    .wrap { padding: 16px; max-width: 1200px; margin: 0 auto; }
+    .hidden { display: none !important; }
+    .card {
+      background: white;
+      border: 1px solid #dbe3f0;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    input, button {
+      outline: none;
+      font-size: 14px;
+      border-radius: 6px;
+      padding: 9px 12px;
+      border: 1px solid #b8c4db;
+    }
+    button {
+      border: 0;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.secondary { background: #475569; }
+    button.danger { background: #b91c1c; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eef2f7; }
+    th { background: #f8fafc; }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover { background: #f1f5fa; }
+    pre {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow: auto;
+      max-height: 360px;
+      font-size: 13px;
+    }
+    .msg { padding: 8px 12px; border-radius: 6px; margin-top: 10px; }
+    .msg.ok { background: #ecfdf5; color: #047857; }
+    .msg.err { background: #fef2f2; color: #b91c1c; }
+    .muted { color: #64748b; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>课迹后台管理</h1>
+    <div id="loginInfo"></div>
+  </header>
+
+  <section id="loginPanel" class="wrap">
+    <div class="card">
+      <div class="row">
+        <input id="username" placeholder="管理员用户名" autocomplete="username">
+        <input id="password" type="password" placeholder="密码" autocomplete="current-password">
+        <button id="loginBtn">登录</button>
+      </div>
+      <div id="loginMsg" class="msg hidden"></div>
+    </div>
+  </section>
+
+  <section id="mainPanel" class="wrap hidden">
+    <div class="row" style="margin-bottom: 12px">
+      <button id="refreshUsers" class="secondary">刷新用户</button>
+      <button id="logoutBtn" class="danger">退出</button>
+    </div>
+
+    <div class="card">
+      <h3>创建用户</h3>
+      <div class="row">
+        <input id="newUsername" placeholder="用户名">
+        <input id="newPassword" type="password" placeholder="密码至少 6 位">
+        <button id="createUserBtn">创建</button>
+      </div>
+      <div id="createMsg" class="msg hidden"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="margin-bottom: 8px">
+        <h3 style="margin:0">流量监控</h3>
+        <button id="refreshTraffic" class="secondary">刷新流量</button>
+      </div>
+      <div id="trafficSummary" class="muted">加载中...</div>
+      <table style="margin-top: 8px">
+        <thead><tr><th>用户</th><th>上传</th><th>下载</th><th>请求数</th><th>最后活动</th></tr></thead>
+        <tbody id="trafficRows"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>用户列表</h3>
+      <table>
+        <thead><tr><th>ID</th><th>用户名</th><th>创建时间</th><th>操作</th></tr></thead>
+        <tbody id="userRows"></tbody>
+      </table>
+    </div>
+
+    <div class="card hidden" id="courseCard">
+      <div class="row" style="margin-bottom: 8px">
+        <h3 id="courseTitle" style="margin:0">课程列表</h3>
+        <button id="backUsers" class="secondary">返回用户</button>
+      </div>
+      <table>
+        <thead><tr><th>课程名称</th><th>状态</th><th>时长(ms)</th><th>创建时间</th><th>总结</th></tr></thead>
+        <tbody id="courseRows"></tbody>
+      </table>
+    </div>
+
+    <div class="card hidden" id="detailCard">
+      <div class="row" style="margin-bottom: 8px">
+        <h3 id="detailTitle" style="margin:0">课程详情</h3>
+        <button id="backCourses" class="secondary">返回课程</button>
+      </div>
+      <h4>全文总结</h4>
+      <pre id="detailSummary"></pre>
+      <h4>转写文本</h4>
+      <pre id="detailTranscript"></pre>
+      <h4>音频段</h4>
+      <pre id="detailAudio"></pre>
+      <h4>截图 / OCR</h4>
+      <pre id="detailScreens"></pre>
+      <h4>任务记录</h4>
+      <pre id="detailJobs"></pre>
+    </div>
+  </section>
+
+  <script>
+    let auth = sessionStorage.getItem("keji_admin_auth") || "";
+    let currentUserId = null;
+
+    function b64(s) {
+      return btoa(unescape(encodeURIComponent(s)));
+    }
+
+    function authHeaders() {
+      return { "Authorization": "Basic " + auth };
+    }
+
+    function showMessage(node, ok, text) {
+      node.className = "msg " + ok;
+      node.textContent = text;
+    }
+
+    function fmtTime(ms) {
+      if (!ms) return "-";
+      try {
+        return new Date(ms).toLocaleString();
+      } catch (e) {
+        return String(ms);
+      }
+    }
+
+    async function api(path, options) {
+      const res = await fetch(path, Object.assign({ headers: authHeaders() }, options || {}));
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(body.detail || res.statusText);
+      }
+      return body;
+    }
+
+    async function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+      if (!username || !password) return;
+      const value = b64(username + ":" + password);
+      auth = value;
+      try {
+        const me = await api("/admin/api/me");
+        sessionStorage.setItem("keji_admin_auth", value);
+        document.getElementById("loginInfo").textContent = me.username;
+        enterMain();
+        await loadUsers();
+        await loadTraffic();
+      } catch (error) {
+        auth = "";
+        showMessage(document.getElementById("loginMsg"), "err", error.message);
+      }
+    }
+
+    function enterMain() {
+      document.getElementById("loginPanel").classList.add("hidden");
+      document.getElementById("mainPanel").classList.remove("hidden");
+    }
+
+    async function loadUsers() {
+      try {
+        const users = await api("/admin/api/users");
+        const tbody = document.getElementById("userRows");
+        tbody.innerHTML = "";
+        for (const user of users) {
+          const tr = document.createElement("tr");
+          tr.className = "clickable";
+          const tdAction = document.createElement("td");
+          const delBtn = document.createElement("button");
+          delBtn.className = "danger";
+          delBtn.textContent = "删除";
+          delBtn.onclick = async function(e) {
+            e.stopPropagation();
+            if (!confirm("确认删除用户 " + user.username + "？")) return;
+            try {
+              await api("/admin/api/users/" + encodeURIComponent(user.username), { method: "DELETE" });
+              await loadUsers();
+            } catch (error) {
+              alert(error.message);
+            }
+          };
+          tdAction.appendChild(delBtn);
+          tr.innerHTML = `<td>${user.id}</td><td>${escapeHtml(user.username)}</td><td>${fmtTime(user.created_at)}</td>`;
+          tr.appendChild(tdAction);
+          tr.onclick = function() { openUserCourses(user); };
+          tbody.appendChild(tr);
+        }
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, function(c) {
+        return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+      });
+    }
+
+    function formatBytes(value) {
+      const v = Number(value || 0);
+      if (v < 1024) return v + " B";
+      if (v < 1024 * 1024) return (v / 1024).toFixed(1) + " KB";
+      if (v < 1024 * 1024 * 1024) return (v / 1024 / 1024).toFixed(1) + " MB";
+      return (v / 1024 / 1024 / 1024).toFixed(2) + " GB";
+    }
+
+    async function loadTraffic() {
+      try {
+        const traffic = await api("/admin/api/traffic");
+        document.getElementById("trafficSummary").textContent =
+          "累计流量 " + formatBytes(traffic.total_bytes) + "，请求 " + traffic.total_requests + " 次";
+        const tbody = document.getElementById("trafficRows");
+        tbody.innerHTML = "";
+        for (const user of traffic.users || []) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${escapeHtml(user.username || "未知")}</td>
+            <td>${formatBytes(user.upload_bytes)}</td>
+            <td>${formatBytes(user.download_bytes)}</td>
+            <td>${user.requests || 0}</td>
+            <td>${fmtTime(user.last_activity_at)}</td>`;
+          tbody.appendChild(tr);
+        }
+      } catch (error) {
+        document.getElementById("trafficSummary").textContent = "流量读取失败: " + error.message;
+      }
+    }
+
+    let currentUser = null;
+
+    async function openUserCourses(user) {
+      currentUser = user;
+      currentUserId = user.id;
+      document.getElementById("courseCard").classList.remove("hidden");
+      document.getElementById("detailCard").classList.add("hidden");
+      document.getElementById("courseTitle").textContent = user.username + " 的课程";
+      try {
+        const courses = await api("/admin/api/users/" + user.id + "/courses");
+        const tbody = document.getElementById("courseRows");
+        tbody.innerHTML = "";
+        for (const course of courses) {
+          const tr = document.createElement("tr");
+          tr.className = "clickable";
+          tr.innerHTML = `
+            <td>${escapeHtml(course.title)}</td>
+            <td>${escapeHtml(course.status)}</td>
+            <td>${course.duration_ms || 0}</td>
+            <td>${fmtTime(course.created_at)}</td>
+            <td>${course.has_summary ? "有" : "无"}</td>`;
+          tr.onclick = function () { openDetail(user, course); };
+          tbody.appendChild(tr);
+        }
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    async function openDetail(user, course) {
+      try {
+        const detail = await api("/admin/api/users/" + user.id + "/courses/" + encodeURIComponent(course.id));
+        document.getElementById("detailCard").classList.remove("hidden");
+        document.getElementById("detailTitle").textContent = course.title;
+        document.getElementById("detailSummary").textContent = detail.summary || "(无摘要)";
+        document.getElementById("detailTranscript").textContent = detail.transcript || "(无转写)";
+        document.getElementById("detailAudio").textContent = JSON.stringify(detail.audio_segments || [], null, 2);
+        document.getElementById("detailScreens").textContent = JSON.stringify(detail.screenshots || [], null, 2);
+        document.getElementById("detailJobs").textContent = JSON.stringify(detail.jobs || [], null, 2);
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    document.getElementById("loginBtn").onclick = login;
+    document.getElementById("password").onkeydown = function(e) { if (e.key === "Enter") login(); };
+    document.getElementById("createUserBtn").onclick = async function() {
+      const username = document.getElementById("newUsername").value.trim();
+      const password = document.getElementById("newPassword").value;
+      try {
+        await api("/admin/api/users", {
+          method: "POST",
+          headers: Object.assign({ "Content-Type": "application/json" }, authHeaders()),
+          body: JSON.stringify({ username, password })
+        });
+        document.getElementById("newUsername").value = "";
+        document.getElementById("newPassword").value = "";
+        showMessage(document.getElementById("createMsg"), "ok", "创建成功");
+        await loadUsers();
+      } catch (error) {
+        showMessage(document.getElementById("createMsg"), "err", error.message);
+      }
+    };
+    document.getElementById("refreshUsers").onclick = function() {
+      loadUsers();
+      loadTraffic();
+    };
+    document.getElementById("refreshTraffic").onclick = loadTraffic;
+    document.getElementById("logoutBtn").onclick = function() {
+      auth = "";
+      sessionStorage.removeItem("keji_admin_auth");
+      location.reload();
+    };
+    document.getElementById("backUsers").onclick = function() {
+      document.getElementById("detailCard").classList.add("hidden");
+      document.getElementById("courseCard").classList.add("hidden");
+    };
+    document.getElementById("backCourses").onclick = function() {
+      if (!currentUser) return;
+      document.getElementById("detailCard").classList.add("hidden");
+      openUserCourses(currentUser);
+    };
+
+    if (auth) {
+      api("/admin/api/me").then(function(me) {
+        document.getElementById("loginInfo").textContent = me.username;
+        enterMain();
+        loadUsers();
+        loadTraffic();
+      }).catch(function() {
+        auth = "";
+        sessionStorage.removeItem("keji_admin_auth");
+      });
+    }
+  </script>
+</body>
+</html>
